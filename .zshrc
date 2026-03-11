@@ -1,3 +1,10 @@
+# OPENSPEC:START
+# OpenSpec shell completions configuration
+fpath=("$HOME/.oh-my-zsh/custom/completions" $fpath)
+autoload -Uz compinit
+compinit
+# OPENSPEC:END
+
 [[ -z "$PROMPT_HEADER_COLOR" ]] && PROMPT_HEADER_COLOR="green"
 [[ -z "$PROMPT_PATH_PREFIX" ]] && PROMPT_PATH_PREFIX=""
 [[ -z "$PROMPT_PATH_COLOR" ]] && PROMPT_PATH_COLOR="blue"
@@ -10,12 +17,14 @@ plugins=(
     docker-compose
     extract
     git
+    gh
     golang
     helm
     kubectl
     minikube
     macos
     pip
+    rust
     ssh-agent
     tmux
 )
@@ -110,6 +119,15 @@ alias ncat='bat --paging=never'
 alias less='bat --style=plain'
 alias nless='bat'
 
+# git
+alias sync-fork='~/dotfiles/scripts/sync-fork.sh'
+
+# git worktree
+alias gw-list='git worktree list'
+alias gw-add='source ~/dotfiles/scripts/git-worktree-add.sh'
+alias gw-remove='git worktree remove'
+alias gw-remove-branch='source ~/dotfiles/scripts/git-worktree-remove-branch.sh'
+
 # Autocomplete for hosts specified in the ~/.ssh/config
 [[ -r ~/.ssh/config ]] && zstyle ':completion:*:hosts' hosts $(grep '^Host ' ~/.ssh/config | awk '{print $2}')
 
@@ -122,3 +140,24 @@ fi
 if command -v atuin &>/dev/null; then
     eval "$(atuin init zsh --disable-up-arrow)"
 fi
+
+. "$HOME/.local/bin/env"
+
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
+
+# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+fpath=($HOME/.docker/completions $fpath)
+autoload -Uz compinit
+compinit
+# End of Docker CLI completions
+
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:$HOME/.lmstudio/bin"
+# End of LM Studio CLI section
+
+# Added by Windsurf
+export PATH="$HOME/.codeium/windsurf/bin:$PATH"
+
+# Added by Antigravity
+export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
