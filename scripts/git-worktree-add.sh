@@ -46,11 +46,18 @@ else
     echo "Error: failed to create worktree"; return 1 2>/dev/null || exit 1; }
 fi
 
-# Copy CLAUDE.md if it exists
-if [ -f "${repo_root}/CLAUDE.md" ]; then
-  cp "${repo_root}/CLAUDE.md" "${wt_path}/CLAUDE.md"
-  echo "Copied CLAUDE.md to worktree"
+# Copy untracked and unstaged files to the new worktree
+_copied=0
+while IFS= read -r file; do
+  [ -z "$file" ] && continue
+  mkdir -p "${wt_path}/$(dirname "$file")"
+  cp "${repo_root}/${file}" "${wt_path}/${file}"
+  (( _copied++ ))
+done < <(git -C "$repo_root" ls-files --others --modified --exclude-standard)
+if [ "$_copied" -gt 0 ]; then
+  echo "Copied ${_copied} untracked/unstaged file(s) to worktree"
 fi
+unset _copied
 
 echo "Worktree created at: ${wt_path}"
 
