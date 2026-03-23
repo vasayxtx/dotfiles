@@ -51,13 +51,32 @@ _copied=0
 while IFS= read -r file; do
   [ -z "$file" ] && continue
   mkdir -p "${wt_path}/$(dirname "$file")"
-  cp "${repo_root}/${file}" "${wt_path}/${file}"
-  (( _copied++ ))
+  command cp -f "${repo_root}/${file}" "${wt_path}/${file}"
+  _copied=$(( _copied + 1 ))
 done < <(git -C "$repo_root" ls-files --others --modified --exclude-standard)
 if [ "$_copied" -gt 0 ]; then
   echo "Copied ${_copied} untracked/unstaged file(s) to worktree"
 fi
 unset _copied
+
+# Copy assume-unchanged files and re-apply the flag in the new worktree
+_au_copied=0
+while IFS= read -r _line; do
+  [ -z "$_line" ] && continue
+  # ls-files -v prefixes: lowercase letter = assume-unchanged
+  _flag="${_line:0:1}"
+  _file="${_line:2}"
+  [[ "$_flag" =~ [a-z] ]] || continue
+  [ -f "${repo_root}/${_file}" ] || continue
+  mkdir -p "${wt_path}/$(dirname "$_file")"
+  command cp -f "${repo_root}/${_file}" "${wt_path}/${_file}"
+  git -C "$wt_path" update-index --assume-unchanged "$_file" 2>/dev/null
+  _au_copied=$(( _au_copied + 1 ))
+done < <(git -C "$repo_root" ls-files -v)
+if [ "$_au_copied" -gt 0 ]; then
+  echo "Copied ${_au_copied} assume-unchanged file(s) to worktree"
+fi
+unset _au_copied _line _flag _file
 
 echo "Worktree created at: ${wt_path}"
 
