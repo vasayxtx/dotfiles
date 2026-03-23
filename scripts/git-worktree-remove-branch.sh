@@ -17,17 +17,19 @@ if ! git rev-parse --is-inside-work-tree &>/dev/null; then
   return 1 2>/dev/null || exit 1
 fi
 
-repo_root="$(git worktree list --porcelain | head -1 | sed 's/^worktree //')"
-worktrees_dir="${repo_root}-worktrees"
-wt_path="${worktrees_dir}/${wt_name}"
+# Find worktree path by matching the branch name
+wt_path="$(git worktree list --porcelain | awk -v branch="refs/heads/$wt_name" '
+  /^worktree / { path = substr($0, 10) }
+  /^branch /   { if (substr($0, 8) == branch) print path }
+')"
 
 # Remove worktree if it exists
-if [ -d "$wt_path" ]; then
+if [ -n "$wt_path" ]; then
   echo "Removing worktree at '${wt_path}'..."
   git worktree remove "${extra_args[@]}" "$wt_path" 2>&1 || {
     echo "Error: failed to remove worktree"; return 1 2>/dev/null || exit 1; }
 else
-  echo "Worktree '${wt_name}' not found, skipping."
+  echo "Worktree for branch '${wt_name}' not found, skipping."
 fi
 
 # Delete branch if it exists (must happen after worktree removal)
